@@ -4,6 +4,7 @@
    "private": true,
    "type": "module",
    "scripts": {
+      "preinstall": "npx only-allow pnpm",
       "build": "next build",
       "dev": "next dev --turbo",
       "lint": "next lint",
@@ -34,6 +35,10 @@
          "prettier --write"
       ]
    },
+   "engines": {
+      "node": ">=18.0.0",
+      "pnpm": ">=9.0.4"
+   },
    "devDependencies": {
       "@clerk/types": "^4.4.0",
       "@commitlint/cli": "^19.3.0",
@@ -59,5 +64,5 @@
    "ct3aMetadata": {
       "initVersion": "7.33.1"
    },
-   "packageManager": "pnpm@9.1.0"
+   "packageManager": "pnpm@9.0.4"
 }
