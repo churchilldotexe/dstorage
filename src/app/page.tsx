@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { SignInButton, SignOutButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -23,17 +23,6 @@ export default function HomePage() {
 
    return (
       <main className="mx-auto h-screen w-screen">
-         <SignedOut>
-            <SignInButton mode="modal">
-               <Button>Sign in here</Button>
-            </SignInButton>
-         </SignedOut>
-         <SignedIn>
-            <SignOutButton>
-               <Button>oh hi sign out?</Button>
-            </SignOutButton>
-         </SignedIn>
-
          {files?.map((file) => <div key={file._id}>{file.name}</div>)}
 
          <Button

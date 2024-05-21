@@ -1,4 +1,5 @@
-import { OrganizationSwitcher, UserButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+import { OrganizationSwitcher, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export default function Header() {
    return (
@@ -7,7 +8,14 @@ export default function Header() {
             oh hi
             <div className="space-x-4">
                <OrganizationSwitcher />
-               <UserButton />
+               <SignedIn>
+                  <UserButton />
+               </SignedIn>
+               <SignedOut>
+                  <SignInButton mode="modal">
+                     <Button>Sign in</Button>
+                  </SignInButton>
+               </SignedOut>
             </div>
          </div>
       </div>

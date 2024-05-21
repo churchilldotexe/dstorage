@@ -12,6 +12,7 @@
       "prepare": "husky"
    },
    "dependencies": {
+      "@clerk/clerk-sdk-node": "^5.0.7",
       "@clerk/nextjs": "^5.0.12",
       "@radix-ui/react-slot": "^1.0.2",
       "@t3-oss/env-nextjs": "^0.10.1",
@@ -23,6 +24,7 @@
       "next": "^14.2.1",
       "react": "18.2.0",
       "react-dom": "18.2.0",
+      "svix": "^1.24.0",
       "tailwind-merge": "^2.3.0",
       "tailwindcss-animate": "^1.0.7",
       "zod": "^3.23.3"
