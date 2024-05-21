@@ -31,7 +31,7 @@ const config = {
          rules: {
             "no-restricted-imports": "off",
             "@typescript-eslint/no-restricted-imports": [
-               "error",
+               "off",
                {
                   patterns: ["../*"],
                },
@@ -79,7 +79,7 @@ const config = {
             "@typescript-eslint/no-empty-interface": "error",
             "consistent-return": "error",
             "@typescript-eslint/explicit-function-return-type": [
-               "warn",
+               "off",
                {
                   allowExpressions: true,
                   allowTypedFunctionExpressions: true,
