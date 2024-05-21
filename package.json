@@ -5,7 +5,7 @@
    "type": "module",
    "scripts": {
       "build": "next build",
-      "dev": "next dev",
+      "dev": "next dev --turbo",
       "lint": "next lint",
       "start": "next start",
       "prepare": "husky"
@@ -35,6 +35,7 @@
       ]
    },
    "devDependencies": {
+      "@clerk/types": "^4.4.0",
       "@commitlint/cli": "^19.3.0",
       "@commitlint/config-conventional": "^19.2.2",
       "@types/eslint": "^8.56.2",
