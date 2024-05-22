@@ -13,9 +13,21 @@ async function hasAccessToOrg(
    return hasAccess;
 }
 
+export const generateUploadUrl = mutation(async (ctx) => {
+   const identity = await ctx.auth.getUserIdentity();
+
+   if (identity === null) {
+      throw new ConvexError("You must be logged in to upload a file");
+   }
+
+   const storage = await ctx.storage.generateUploadUrl();
+   return storage;
+});
+
 export const createFile = mutation({
    args: {
       name: v.string(),
+      fileId: v.id("_storage"),
       AuthId: v.string(),
    },
 
@@ -33,6 +45,7 @@ export const createFile = mutation({
       await ctx.db.insert("files", {
          name: args.name,
          AuthId: args.AuthId,
+         fileId: args.fileId,
       });
    },
 });

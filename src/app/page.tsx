@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
@@ -33,9 +34,22 @@ const formSchema = z.object({
 });
 
 export default function HomePage() {
+   const [isFileDiaglogOpen, setIsFileDiaglogOpen] = useState<boolean>(false);
+
    const user = useAuth();
    const hasUser = user.userId === null || user.userId === undefined;
    const hasOrgId = user.orgId === null || user.orgId === undefined;
+
+   let AuthId = "";
+   if (!hasOrgId) {
+      AuthId = user.orgId;
+   } else if (!hasUser) {
+      AuthId = user.userId;
+   }
+
+   const files = useQuery(api.files.getFiles, AuthId !== "" ? { AuthId } : "skip");
+   const createFile = useMutation(api.files.createFile);
+   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
 
    const form = useForm<z.infer<typeof formSchema>>({
       resolver: zodResolver(formSchema),
@@ -47,37 +61,40 @@ export default function HomePage() {
 
    const fileRef = form.register("file");
 
-   function onSubmit(values: z.infer<typeof formSchema>) {
+   async function onSubmit(values: z.infer<typeof formSchema>) {
       console.log(values);
-   }
-
-   let AuthId = "";
-   if (!hasOrgId) {
-      AuthId = user.orgId;
-   } else if (!hasUser) {
-      AuthId = user.userId;
-   }
-
-   const files = useQuery(api.files.getFiles, AuthId !== "" ? { AuthId } : "skip");
-   const createFile = useMutation(api.files.createFile);
-
-   const handleUploadFile = async () => {
       if (AuthId === "") return;
-      console.log("ran");
+      if (values.file[0] === undefined) return;
+
+      const postUrl = await generateUploadUrl();
+      const result = await fetch(postUrl, {
+         method: "POST",
+         headers: { "Content-Type": values.file[0].type },
+         body: values.file[0],
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const { storageId } = await result.json();
+
       await createFile({
-         name: "oh hi",
+         name: values.title,
+         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         fileId: storageId,
          AuthId,
       });
-   };
+
+      form.reset();
+      setIsFileDiaglogOpen(false);
+   }
 
    return (
       <main className="container mx-auto pt-12">
          <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold">Your Files</h1>
 
-            <Dialog>
+            <Dialog open={isFileDiaglogOpen} onOpenChange={setIsFileDiaglogOpen}>
                <DialogTrigger asChild>
-                  <Button onClick={handleUploadFile}>Upload File</Button>
+                  <Button>Upload File</Button>
                </DialogTrigger>
                <DialogContent>
                   <DialogHeader>
