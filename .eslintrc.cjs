@@ -99,7 +99,7 @@ const config = {
                },
             ],
             "@typescript-eslint/prefer-nullish-coalescing": "error",
-            "no-shadow": "error",
+            "no-shadow": "warn",
             "@typescript-eslint/explicit-member-accessibility": [
                "error",
                {

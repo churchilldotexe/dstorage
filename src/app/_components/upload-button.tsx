@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { type Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -68,20 +69,32 @@ export function UploadButton() {
 
       try {
          const postUrl = await generateUploadUrl();
+
+         const fileType = values.file[0].type;
          const result = await fetch(postUrl, {
             method: "POST",
-            headers: { "Content-Type": values.file[0].type },
+            headers: { "Content-Type": fileType },
             body: values.file[0],
          });
 
          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
          const { storageId } = await result.json();
 
+         const types = {
+            "image/png": "image",
+            "image/jpg": "image",
+            "image/webp": "image",
+            "image/bmp": "image",
+            "application/pdf": "pdf",
+            "text/csc": "csv",
+         } as Record<string, Doc<"files">["type"]>;
+
          await createFile({
             name: values.title,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             fileId: storageId,
             AuthId,
+            type: types[fileType]!,
          });
 
          form.reset();

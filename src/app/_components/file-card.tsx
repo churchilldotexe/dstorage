@@ -16,13 +16,19 @@ import {
    DropdownMenuItem,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { api } from "../../../convex/_generated/api";
-
 import { type Doc } from "convex/_generated/dataModel";
-import { useMutation } from "convex/react";
-import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
-import { Fragment, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import {
+   FileTextIcon,
+   GanttChartIcon,
+   ImageIcon,
+   MoreVerticalIcon,
+   Trash2Icon,
+} from "lucide-react";
+import Image from "next/image";
+import { Fragment, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { api } from "../../../convex/_generated/api";
 
 type FilePropTypes = Doc<"files">;
 
@@ -77,18 +83,45 @@ function FileCardAction({ file }: { file: FilePropTypes }) {
    );
 }
 
+// function ImageFile({ name, url }: { url: string; name: string }) {
+//    return <Image src={url} alt={name} width={"200"} height={"100"} />;
+// }
+
 export function FileCard({ file }: { file: FilePropTypes }) {
+   const fileTypesIcon = {
+      image: <ImageIcon />,
+      pdf: <FileTextIcon />,
+      csv: <GanttChartIcon />,
+   } as Record<Doc<"files">["type"], ReactNode>;
+
+   const fileUrls = useQuery(
+      api.files.getFilesUrl,
+      file.AuthId !== "" ? { AuthId: file.AuthId } : "skip"
+   );
+
    return (
       <Card>
          <CardHeader className="relative">
-            <CardTitle>{file.name}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+               <div>{fileTypesIcon[file.type]}</div> {file.name}
+            </CardTitle>
             {/* <CardDescription>Card Description</CardDescription> */}
             <div className="absolute right-2 top-2">
                <FileCardAction file={file} />
             </div>
          </CardHeader>
-         <CardContent>
-            <p>Card Content</p>
+         <CardContent className="flex h-[200px] items-center justify-center">
+            {file.type === "image" &&
+               fileUrls?.map(
+                  (item) =>
+                     file.fileId === item.fileId && (
+                        <div key={item._id} className="relative aspect-video size-48">
+                           <Image src={item.url!} alt={item.name} fill />
+                        </div>
+                     )
+               )}
+            {file.type === "csv" && <GanttChartIcon className="size-20" />}
+            {file.type === "pdf" && <FileTextIcon className="size-20" />}
          </CardContent>
          <CardFooter>
             <Button type="button">Download</Button>
