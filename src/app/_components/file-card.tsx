@@ -16,7 +16,7 @@ import {
    DropdownMenuItem,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { api } from "convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 
 import { type Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
