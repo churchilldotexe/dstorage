@@ -14,6 +14,7 @@ import {
    DropdownMenu,
    DropdownMenuContent,
    DropdownMenuItem,
+   DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type Doc } from "convex/_generated/dataModel";
@@ -28,12 +29,13 @@ import {
 import Image from "next/image";
 import { Fragment, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { api } from "../../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 
 type FilePropTypes = Doc<"files">;
 
 function FileCardAction({ file }: { file: FilePropTypes }) {
    const deleteFile = useMutation(api.files.deleteFile);
+   const toggleFavorites = useMutation(api.files.toggleFavorites);
 
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
 
@@ -69,6 +71,15 @@ function FileCardAction({ file }: { file: FilePropTypes }) {
                <MoreVerticalIcon />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+               <DropdownMenuItem
+                  className="flex cursor-pointer items-center gap-2 "
+                  onClick={async () => {
+                     await toggleFavorites({ fileId: file._id });
+                  }}
+               >
+                  <Trash2Icon className="size-4" /> Favorites
+               </DropdownMenuItem>
+               <DropdownMenuSeparator />
                <DropdownMenuItem
                   className="flex cursor-pointer items-center gap-2 text-destructive"
                   onClick={() => {

@@ -1,14 +1,14 @@
 "use client";
 
-import { FileCard } from "@/app/_components/file-card";
-import SearchBar from "@/app/_components/search-bar";
-import { UploadButton } from "@/app/_components/upload-button";
+import { FileCard } from "@/app/dashboard/_components/file-card";
+import SearchBar from "@/app/dashboard/_components/search-bar";
+import { UploadButton } from "@/app/dashboard/_components/upload-button";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 
 function PlaceHolder() {
    return (
@@ -29,12 +29,11 @@ function PlaceHolder() {
    );
 }
 
-export default function HomePage() {
+export default function FilesBrowser({ title, favorites }: { title: string; favorites?: boolean }) {
+   const [query, setQuery] = useState<string>("");
    const user = useAuth();
    const hasUser = user.userId === null || user.userId === undefined;
    const hasOrgId = user.orgId === null || user.orgId === undefined;
-
-   const [query, setQuery] = useState<string>("");
 
    let AuthId = "";
    if (!hasOrgId) {
@@ -43,31 +42,34 @@ export default function HomePage() {
       AuthId = user.userId;
    }
 
-   const files = useQuery(api.files.getFiles, AuthId !== "" ? { AuthId, query } : "skip");
+   const files = useQuery(
+      api.files.getFiles,
+      AuthId !== "" ? { AuthId, query, favorites } : "skip"
+   );
    const isLoading = files === undefined;
 
    return (
-      <main className="container mx-auto space-y-6 pt-12">
+      <main className="container space-y-6 pt-12">
          <div className="flex items-center justify-between">
-            <h1 className="text-4xl font-bold">Your Files</h1>
+            <h1 className="text-4xl font-bold">{title}</h1>
 
             <SearchBar setQuery={setQuery} />
 
             <UploadButton />
          </div>
 
+         {isLoading && (
+            <div className="m-auto flex size-fit flex-col items-center justify-center">
+               <Loader2 className="size-32 animate-spin text-gray-700" />
+               <span className="text-xl font-medium text-gray-950">Loading</span>
+            </div>
+         )}
+
          {files?.length === 0 && <PlaceHolder />}
 
          {!isLoading && files?.length > 0 && (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                {files?.map((file) => <FileCard key={file._id} file={file} />)}
-            </div>
-         )}
-
-         {isLoading && (
-            <div className="fixed inset-0 m-auto flex size-fit flex-col items-center justify-center">
-               <Loader2 className="size-32 animate-spin text-gray-700" />
-               <span className="text-xl font-medium text-gray-950">Loading</span>
             </div>
          )}
       </main>
