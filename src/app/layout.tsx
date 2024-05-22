@@ -1,6 +1,7 @@
 import ConvexClientProvider from "@/app/ConvexClientProvider";
 import Header from "@/app/_components/Header";
 import "@/styles/globals.css";
+import { Toaster } from "sonner";
 
 import { GeistSans } from "geist/font/sans";
 
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en" className={`${GeistSans.variable}`}>
          <body>
             <ConvexClientProvider>
+               <Toaster closeButton richColors />
                <Header />
                {children}
             </ConvexClientProvider>

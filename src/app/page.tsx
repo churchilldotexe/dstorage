@@ -21,8 +21,10 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "convex/react";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "../../convex/_generated/api";
 
@@ -66,25 +68,34 @@ export default function HomePage() {
       if (AuthId === "") return;
       if (values.file[0] === undefined) return;
 
-      const postUrl = await generateUploadUrl();
-      const result = await fetch(postUrl, {
-         method: "POST",
-         headers: { "Content-Type": values.file[0].type },
-         body: values.file[0],
-      });
+      try {
+         const postUrl = await generateUploadUrl();
+         const result = await fetch(postUrl, {
+            method: "POST",
+            headers: { "Content-Type": values.file[0].type },
+            body: values.file[0],
+         });
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const { storageId } = await result.json();
-
-      await createFile({
-         name: values.title,
          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-         fileId: storageId,
-         AuthId,
-      });
+         const { storageId } = await result.json();
 
-      form.reset();
-      setIsFileDiaglogOpen(false);
+         await createFile({
+            name: values.title,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            fileId: storageId,
+            AuthId,
+         });
+
+         form.reset();
+         setIsFileDiaglogOpen(false);
+         toast.success("File successfully uploaded", {
+            description: "Everyone can now view your file",
+         });
+      } catch (error) {
+         toast.error("Something went wrong", {
+            description: "Your file could not be uploaded, try again later",
+         });
+      }
    }
 
    return (
@@ -92,7 +103,13 @@ export default function HomePage() {
          <div className="flex items-center justify-between">
             <h1 className="text-4xl font-bold">Your Files</h1>
 
-            <Dialog open={isFileDiaglogOpen} onOpenChange={setIsFileDiaglogOpen}>
+            <Dialog
+               open={isFileDiaglogOpen}
+               onOpenChange={(open) => {
+                  setIsFileDiaglogOpen(open);
+                  form.reset();
+               }}
+            >
                <DialogTrigger asChild>
                   <Button>Upload File</Button>
                </DialogTrigger>
@@ -129,7 +146,16 @@ export default function HomePage() {
                                     </FormItem>
                                  )}
                               />
-                              <Button type="submit">Submit</Button>
+                              <Button type="submit" disabled={form.formState.isSubmitting}>
+                                 {form.formState.isSubmitting ? (
+                                    <div className="flex items-center gap-1">
+                                       <Loader2 className="size-4 animate-spin" />
+                                       <span>Loading</span>
+                                    </div>
+                                 ) : (
+                                    "Submit"
+                                 )}
+                              </Button>
                            </form>
                         </Form>
                      </DialogDescription>
