@@ -11,7 +11,6 @@ export default function HomePage() {
    const hasOrgId = user.orgId === null || user.orgId === undefined;
 
    let AuthId = "";
-   console.log("AuthId", AuthId);
    if (!hasOrgId) {
       AuthId = user.orgId;
    } else if (!hasUser) {
