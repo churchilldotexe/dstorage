@@ -17,7 +17,7 @@ import {
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type Doc } from "convex/_generated/dataModel";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import {
    FileTextIcon,
    GanttChartIcon,
@@ -83,21 +83,14 @@ function FileCardAction({ file }: { file: FilePropTypes }) {
    );
 }
 
-// function ImageFile({ name, url }: { url: string; name: string }) {
-//    return <Image src={url} alt={name} width={"200"} height={"100"} />;
-// }
-
-export function FileCard({ file }: { file: FilePropTypes }) {
+export function FileCard({ file }: { file: FilePropTypes & { url: string | null } }) {
    const fileTypesIcon = {
       image: <ImageIcon />,
       pdf: <FileTextIcon />,
       csv: <GanttChartIcon />,
    } as Record<Doc<"files">["type"], ReactNode>;
 
-   const fileUrls = useQuery(
-      api.files.getFilesUrl,
-      file.AuthId !== "" ? { AuthId: file.AuthId } : "skip"
-   );
+   if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
 
    return (
       <Card>
@@ -111,20 +104,23 @@ export function FileCard({ file }: { file: FilePropTypes }) {
             </div>
          </CardHeader>
          <CardContent className="flex h-[200px] items-center justify-center">
-            {file.type === "image" &&
-               fileUrls?.map(
-                  (item) =>
-                     file.fileId === item.fileId && (
-                        <div key={item._id} className="relative aspect-video size-48">
-                           <Image src={item.url!} alt={item.name} fill />
-                        </div>
-                     )
-               )}
+            {file.type === "image" && (
+               <div key={file._id} className="relative aspect-video size-48">
+                  <Image src={file.url} alt={file.name} fill />
+               </div>
+            )}
             {file.type === "csv" && <GanttChartIcon className="size-20" />}
             {file.type === "pdf" && <FileTextIcon className="size-20" />}
          </CardContent>
          <CardFooter>
-            <Button type="button">Download</Button>
+            <Button
+               type="button"
+               onClick={() => {
+                  window.open(file.url!, "_blank");
+               }}
+            >
+               Download
+            </Button>
          </CardFooter>
       </Card>
    );

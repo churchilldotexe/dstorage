@@ -54,29 +54,8 @@ export const createFile = mutation({
 });
 
 export const getFiles = query({
-   args: { AuthId: v.string() },
+   args: { AuthId: v.string(), query: v.string() },
    async handler(ctx, args) {
-      const identity = await ctx.auth.getUserIdentity();
-
-      if (identity === null) {
-         return [];
-      }
-      const hasAccess = await hasAccessToOrg(ctx, identity.tokenIdentifier, args.AuthId);
-
-      if (!hasAccess) {
-         return [];
-      }
-
-      return ctx.db
-         .query("files")
-         .withIndex("byAuthId", (q) => q.eq("AuthId", args.AuthId))
-         .collect();
-   },
-});
-
-export const getFilesUrl = query({
-   args: { AuthId: v.string() },
-   handler: async (ctx, args) => {
       const identity = await ctx.auth.getUserIdentity();
 
       if (identity === null) {
@@ -93,12 +72,20 @@ export const getFilesUrl = query({
          .withIndex("byAuthId", (q) => q.eq("AuthId", args.AuthId))
          .collect();
 
-      return Promise.all(
+      const filesWithUrl = Promise.all(
          files.map(async (file) => ({
             ...file,
-            ...(file.type === "image" ? { url: await ctx.storage.getUrl(file.fileId) } : {}),
+            url: await ctx.storage.getUrl(file.fileId),
          }))
       );
+
+      if (args.query !== "") {
+         return (await filesWithUrl).filter((file) =>
+            file.name.toLocaleLowerCase().includes(args.query.toLocaleLowerCase())
+         );
+      } else {
+         return filesWithUrl;
+      }
    },
 });
 
