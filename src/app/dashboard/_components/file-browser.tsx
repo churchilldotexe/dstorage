@@ -29,7 +29,13 @@ function PlaceHolder() {
    );
 }
 
-export default function FilesBrowser({ title, favorites }: { title: string; favorites?: boolean }) {
+export default function FilesBrowser({
+   title,
+   showFavoritesOnly,
+}: {
+   title: string;
+   showFavoritesOnly?: boolean;
+}) {
    const [query, setQuery] = useState<string>("");
    const user = useAuth();
    const hasUser = user.userId === null || user.userId === undefined;
@@ -42,9 +48,14 @@ export default function FilesBrowser({ title, favorites }: { title: string; favo
       AuthId = user.userId;
    }
 
+   const favorites = useQuery(
+      api.files.getAllFavorites,
+      AuthId !== "" ? { orgId: AuthId } : "skip"
+   );
+
    const files = useQuery(
       api.files.getFiles,
-      AuthId !== "" ? { AuthId, query, favorites } : "skip"
+      AuthId !== "" ? { AuthId, query, favorites: showFavoritesOnly } : "skip"
    );
    const isLoading = files === undefined;
 
@@ -69,7 +80,7 @@ export default function FilesBrowser({ title, favorites }: { title: string; favo
 
          {!isLoading && files?.length > 0 && (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-               {files?.map((file) => <FileCard key={file._id} file={file} />)}
+               {files?.map((file) => <FileCard favorites={favorites} key={file._id} file={file} />)}
             </div>
          )}
       </main>

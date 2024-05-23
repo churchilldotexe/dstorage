@@ -150,19 +150,19 @@ export const toggleFavorites = mutation({
 });
 
 export const getAllFavorites = query({
-   args: { fileId: v.id("files") },
+   args: { orgId: v.string() },
    async handler(ctx, args) {
-      const access = await hasAccessToFile(ctx, args.fileId);
+      const access = await hasAccessToOrg(ctx, args.orgId);
 
       if (access === null) {
-         throw new ConvexError("no access to file");
+         return [];
       }
-      const { file, user } = access;
+      const { user } = access;
 
       const favorites = await ctx.db
          .query("favorites")
          .withIndex("by_userId_orgId_fileId", (q) =>
-            q.eq("userId", user._id).eq("orgId", file.AuthId).eq("fileId", file._id)
+            q.eq("userId", user._id).eq("orgId", args.orgId)
          )
          .collect();
 

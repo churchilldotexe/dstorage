@@ -24,6 +24,8 @@ import {
    GanttChartIcon,
    ImageIcon,
    MoreVerticalIcon,
+   StarHalf,
+   StarIcon,
    Trash2Icon,
 } from "lucide-react";
 import Image from "next/image";
@@ -33,7 +35,7 @@ import { api } from "../../../../convex/_generated/api";
 
 type FilePropTypes = Doc<"files">;
 
-function FileCardAction({ file }: { file: FilePropTypes }) {
+function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorited: boolean }) {
    const deleteFile = useMutation(api.files.deleteFile);
    const toggleFavorites = useMutation(api.files.toggleFavorites);
 
@@ -77,7 +79,15 @@ function FileCardAction({ file }: { file: FilePropTypes }) {
                      await toggleFavorites({ fileId: file._id });
                   }}
                >
-                  <Trash2Icon className="size-4" /> Favorites
+                  {isFavorited ? (
+                     <div className="flex items-center gap-1">
+                        <StarIcon className="size-4" /> UnFavorite
+                     </div>
+                  ) : (
+                     <div className="flex items-center gap-1">
+                        <StarHalf className="size-4" /> Favorite
+                     </div>
+                  )}
                </DropdownMenuItem>
                <DropdownMenuSeparator />
                <DropdownMenuItem
@@ -94,7 +104,13 @@ function FileCardAction({ file }: { file: FilePropTypes }) {
    );
 }
 
-export function FileCard({ file }: { file: FilePropTypes & { url: string | null } }) {
+export function FileCard({
+   file,
+   favorites,
+}: {
+   file: FilePropTypes & { url: string | null };
+   favorites: Array<Doc<"favorites">>;
+}) {
    const fileTypesIcon = {
       image: <ImageIcon />,
       pdf: <FileTextIcon />,
@@ -102,6 +118,8 @@ export function FileCard({ file }: { file: FilePropTypes & { url: string | null 
    } as Record<Doc<"files">["type"], ReactNode>;
 
    if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
+
+   const isFavorited = favorites.some((favorite) => favorite.fileId === file._id);
 
    return (
       <Card>
@@ -111,7 +129,7 @@ export function FileCard({ file }: { file: FilePropTypes & { url: string | null 
             </CardTitle>
             {/* <CardDescription>Card Description</CardDescription> */}
             <div className="absolute right-2 top-2">
-               <FileCardAction file={file} />
+               <FileCardAction file={file} isFavorited={isFavorited} />
             </div>
          </CardHeader>
          <CardContent className="flex h-[200px] items-center justify-center">
