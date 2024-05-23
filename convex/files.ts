@@ -4,15 +4,18 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/s
 import { fileTypes } from "./schema";
 import { getUser } from "./users";
 
-async function hasAccessToOrg(
-   ctx: QueryCtx | MutationCtx,
-   tokenIdentifier: string,
-   AuthId: string
-) {
-   const user = await getUser(ctx, tokenIdentifier);
+async function hasAccessToOrg(ctx: QueryCtx | MutationCtx, AuthId: string) {
+   const identity = await ctx.auth.getUserIdentity();
+
+   if (identity === null) throw new ConvexError("Please Login to upload a file");
+
+   const user = await getUser(ctx, identity.tokenIdentifier);
 
    const hasAccess = user.orgIds.includes(AuthId) || user.tokenIdentifier.includes(AuthId);
-   return hasAccess;
+
+   if (!Boolean(hasAccess)) return null;
+
+   return { user };
 }
 
 export const generateUploadUrl = mutation(async (ctx) => {
@@ -35,13 +38,9 @@ export const createFile = mutation({
    },
 
    async handler(ctx, args) {
-      const identity = await ctx.auth.getUserIdentity();
+      const hasAccess = await hasAccessToOrg(ctx, args.AuthId);
 
-      if (identity === null) throw new ConvexError("Please Login to upload a file");
-
-      const hasAccess = await hasAccessToOrg(ctx, identity.tokenIdentifier, args.AuthId);
-
-      if (!hasAccess) {
+      if (hasAccess === null) {
          throw new ConvexError("You don't have access to this Organization");
       }
 
@@ -57,14 +56,9 @@ export const createFile = mutation({
 export const getFiles = query({
    args: { AuthId: v.string(), query: v.string(), favorites: v.optional(v.boolean()) },
    async handler(ctx, args) {
-      const identity = await ctx.auth.getUserIdentity();
+      const hasAccess = await hasAccessToOrg(ctx, args.AuthId);
 
-      if (identity === null) {
-         return [];
-      }
-      const hasAccess = await hasAccessToOrg(ctx, identity.tokenIdentifier, args.AuthId);
-
-      if (!hasAccess) {
+      if (hasAccess === null) {
          return [];
       }
 
@@ -85,19 +79,10 @@ export const getFiles = query({
             file.name.toLocaleLowerCase().includes(args.query.toLocaleLowerCase())
          );
       } else if (Boolean(args.favorites)) {
-         const user = await ctx.db
-            .query("users")
-            .withIndex("by_tokenIdentifier", (q) =>
-               q.eq("tokenIdentifier", identity.tokenIdentifier)
-            )
-            .first();
-
-         if (user === null) return filesWithUrl;
-
          const favorites = await ctx.db
             .query("favorites")
             .withIndex("by_userId_orgId_fileId", (q) =>
-               q.eq("userId", user._id).eq("orgId", args.AuthId)
+               q.eq("userId", hasAccess.user._id).eq("orgId", args.AuthId)
             )
             .collect();
 
@@ -111,26 +96,15 @@ export const getFiles = query({
 });
 
 async function hasAccessToFile(ctx: QueryCtx | MutationCtx, fileId: Id<"files">) {
-   const identity = await ctx.auth.getUserIdentity();
-
-   if (identity === null) return null;
-
    const file = await ctx.db.get(fileId);
 
    if (file === null) return null;
 
-   const hasAccess = await hasAccessToOrg(ctx, identity.tokenIdentifier, file.AuthId);
+   const hasAccess = await hasAccessToOrg(ctx, file.AuthId);
 
-   if (!hasAccess) return null;
+   if (hasAccess === null) return null;
 
-   const user = await ctx.db
-      .query("users")
-      .withIndex("by_tokenIdentifier", (q) => q.eq("tokenIdentifier", identity.tokenIdentifier))
-      .first();
-
-   if (user === null) return null;
-
-   return { user, file };
+   return { user: hasAccess.user, file };
 }
 
 export const deleteFile = mutation({
@@ -172,5 +146,26 @@ export const toggleFavorites = mutation({
       } else {
          await ctx.db.delete(favorite._id);
       }
+   },
+});
+
+export const getAllFavorites = query({
+   args: { fileId: v.id("files") },
+   async handler(ctx, args) {
+      const access = await hasAccessToFile(ctx, args.fileId);
+
+      if (access === null) {
+         throw new ConvexError("no access to file");
+      }
+      const { file, user } = access;
+
+      const favorites = await ctx.db
+         .query("favorites")
+         .withIndex("by_userId_orgId_fileId", (q) =>
+            q.eq("userId", user._id).eq("orgId", file.AuthId).eq("fileId", file._id)
+         )
+         .collect();
+
+      return favorites;
    },
 });
