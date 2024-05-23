@@ -57,7 +57,7 @@ export default function FilesBrowser({
       api.files.getFiles,
       AuthId !== "" ? { AuthId, query, favorites: showFavoritesOnly } : "skip"
    );
-   const isLoading = files === undefined;
+   const isLoading = files === undefined || favorites === undefined;
 
    return (
       <main className="container space-y-6 pt-12">

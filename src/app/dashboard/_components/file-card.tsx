@@ -17,6 +17,7 @@ import {
    DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Protect } from "@clerk/nextjs";
 import { type Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import {
@@ -89,15 +90,19 @@ function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorite
                      </div>
                   )}
                </DropdownMenuItem>
-               <DropdownMenuSeparator />
-               <DropdownMenuItem
-                  className="flex cursor-pointer items-center gap-2 text-destructive"
-                  onClick={() => {
-                     setIsConfirmOpen(true);
-                  }}
-               >
-                  <Trash2Icon className="size-4" /> Delete
-               </DropdownMenuItem>
+
+               <Protect role="org:admin" fallback={<Fragment></Fragment>}>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                     className="flex cursor-pointer items-center gap-2 text-destructive"
+                     onClick={() => {
+                        setIsConfirmOpen(true);
+                     }}
+                  >
+                     <Trash2Icon className="size-4" /> Delete
+                  </DropdownMenuItem>
+               </Protect>
             </DropdownMenuContent>
          </DropdownMenu>
       </Fragment>
@@ -134,14 +139,14 @@ export function FileCard({
          </CardHeader>
          <CardContent className="flex h-[200px] items-center justify-center">
             {file.type === "image" && (
-               <div key={file._id} className="relative aspect-video size-48">
-                  <Image src={file.url} alt={file.name} fill />
+               <div key={file._id} className="relative size-full">
+                  <Image src={file.url} alt={file.name} fill style={{ objectFit: "contain" }} />
                </div>
             )}
             {file.type === "csv" && <GanttChartIcon className="size-20" />}
             {file.type === "pdf" && <FileTextIcon className="size-20" />}
          </CardContent>
-         <CardFooter>
+         <CardFooter className="flex justify-center">
             <Button
                type="button"
                onClick={() => {

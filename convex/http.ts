@@ -33,6 +33,15 @@ http.route({
                await ctx.runMutation(internal.users.addOrgIdToUser, {
                   tokenIdentifier: `https://sound-gull-29.clerk.accounts.dev|${result.data.public_user_data.user_id}`,
                   orgId: result.data.organization.id,
+                  role: result.data.role === "org:admin" ? "admin" : "member",
+               });
+               break;
+
+            case "organizationMembership.updated":
+               await ctx.runMutation(internal.users.updateRoleInOrgForUser, {
+                  tokenIdentifier: `https://sound-gull-29.clerk.accounts.dev|${result.data.public_user_data.user_id}`,
+                  orgId: result.data.organization.id,
+                  role: result.data.role === "org:admin" ? "admin" : "member",
                });
                break;
          }
