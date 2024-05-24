@@ -1,6 +1,12 @@
 import { ConvexError, v } from "convex/values";
 import { type Id } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import {
+   internalMutation,
+   mutation,
+   query,
+   type MutationCtx,
+   type QueryCtx,
+} from "./_generated/server";
 import { fileTypes } from "./schema";
 import { getUser } from "./users";
 
@@ -50,6 +56,7 @@ export const createFile = mutation({
          AuthId: args.AuthId,
          fileId: args.fileId,
          type: args.type,
+         userId: hasAccess.user._id,
       });
    },
 });
@@ -115,6 +122,23 @@ async function hasAccessToFile(ctx: QueryCtx | MutationCtx, fileId: Id<"files">)
    return { user: hasAccess.user, file };
 }
 
+export const deleteAllFiles = internalMutation({
+   args: {},
+   async handler(ctx) {
+      const files = await ctx.db
+         .query("files")
+         .withIndex("by_shouldDelete", (q) => q.eq("shouldDelete", true))
+         .collect();
+
+      await Promise.all(
+         files.map(async (file) => {
+            await ctx.storage.delete(file.fileId);
+            await ctx.db.delete(file._id);
+         })
+      );
+   },
+});
+
 export const deleteFile = mutation({
    args: { fileId: v.id("files") },
    async handler(ctx, args) {
@@ -135,6 +159,30 @@ export const deleteFile = mutation({
 
       await ctx.db.patch(args.fileId, {
          shouldDelete: true,
+      });
+   },
+});
+
+export const restoreFile = mutation({
+   args: { fileId: v.id("files") },
+   async handler(ctx, args) {
+      const access = await hasAccessToFile(ctx, args.fileId);
+
+      if (access === null) {
+         throw new ConvexError("no access to file");
+      }
+
+      const isAdmin =
+         access.user.orgIds.find((org) => org.orgId === access.file.AuthId)?.role === "admin";
+
+      if (!isAdmin) {
+         throw new ConvexError(
+            "You don't have access to delete this file, please contact your admin."
+         );
+      }
+
+      await ctx.db.patch(args.fileId, {
+         shouldDelete: false,
       });
    },
 });

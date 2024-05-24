@@ -8,7 +8,7 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
    DropdownMenu,
@@ -17,10 +17,12 @@ import {
    DropdownMenuSeparator,
    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formattedDate } from "@/lib/utils";
 import { Protect } from "@clerk/nextjs";
 import { type Doc } from "convex/_generated/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
+   FileIcon,
    FileTextIcon,
    GanttChartIcon,
    ImageIcon,
@@ -28,6 +30,7 @@ import {
    StarHalf,
    StarIcon,
    Trash2Icon,
+   Undo2Icon,
 } from "lucide-react";
 import Image from "next/image";
 import { Fragment, useState, type ReactNode } from "react";
@@ -36,11 +39,28 @@ import { api } from "../../../../convex/_generated/api";
 
 type FilePropTypes = Doc<"files">;
 
-function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorited: boolean }) {
+function FileCardAction({
+   file,
+   isFavorited,
+}: {
+   file: FilePropTypes & { url: string | null };
+   isFavorited: boolean;
+}) {
    const deleteFile = useMutation(api.files.deleteFile);
+   const restoreFile = useMutation(api.files.restoreFile);
    const toggleFavorites = useMutation(api.files.toggleFavorites);
 
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
+
+   const handleItemDeletionOrRestoration = async () => {
+      if (Boolean(file.shouldDelete)) {
+         await restoreFile({ fileId: file._id });
+      } else {
+         setIsConfirmOpen(true);
+      }
+   };
+
+   if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
 
    return (
       <Fragment>
@@ -76,6 +96,15 @@ function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorite
             <DropdownMenuContent>
                <DropdownMenuItem
                   className="flex cursor-pointer items-center gap-2 "
+                  onClick={() => {
+                     window.open(file.url!, "_blank");
+                  }}
+               >
+                  <FileIcon className="size-4" /> Download
+               </DropdownMenuItem>
+
+               <DropdownMenuItem
+                  className="flex cursor-pointer items-center gap-2 "
                   onClick={async () => {
                      await toggleFavorites({ fileId: file._id });
                   }}
@@ -94,13 +123,16 @@ function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorite
                <Protect role="org:admin" fallback={<Fragment></Fragment>}>
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem
-                     className="flex cursor-pointer items-center gap-2 text-destructive"
-                     onClick={() => {
-                        setIsConfirmOpen(true);
-                     }}
-                  >
-                     <Trash2Icon className="size-4" /> Delete
+                  <DropdownMenuItem onClick={handleItemDeletionOrRestoration}>
+                     {Boolean(file.shouldDelete) ? (
+                        <div className="flex cursor-pointer items-center gap-2 text-green-500">
+                           <Undo2Icon className="size-4" /> Restore
+                        </div>
+                     ) : (
+                        <div className="flex cursor-pointer items-center gap-2 text-destructive">
+                           <Trash2Icon className="size-4" /> Delete
+                        </div>
+                     )}
                   </DropdownMenuItem>
                </Protect>
             </DropdownMenuContent>
@@ -125,14 +157,14 @@ export function FileCard({
    if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
 
    const isFavorited = favorites.some((favorite) => favorite.fileId === file._id);
+   const getUserProfile = useQuery(api.users.getUserProfile, { userId: file.userId });
 
    return (
       <Card>
          <CardHeader className="relative">
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 capitalize">
                <div>{fileTypesIcon[file.type]}</div> {file.name}
             </CardTitle>
-            {/* <CardDescription>Card Description</CardDescription> */}
             <div className="absolute right-2 top-2">
                <FileCardAction file={file} isFavorited={isFavorited} />
             </div>
@@ -146,15 +178,17 @@ export function FileCard({
             {file.type === "csv" && <GanttChartIcon className="size-20" />}
             {file.type === "pdf" && <FileTextIcon className="size-20" />}
          </CardContent>
-         <CardFooter className="flex justify-center">
-            <Button
-               type="button"
-               onClick={() => {
-                  window.open(file.url!, "_blank");
-               }}
-            >
-               Download
-            </Button>
+         <CardFooter className="flex flex-wrap justify-between gap-2 text-sm font-semibold text-gray-500">
+            <div className="flex items-center gap-2 ">
+               <Avatar className="size-6">
+                  <AvatarImage src={getUserProfile?.image} />
+                  <AvatarFallback>CN</AvatarFallback>
+               </Avatar>
+
+               <div className="line-clamp-1 grow-0">{getUserProfile?.name}</div>
+            </div>
+
+            <div>Uploaded on {formattedDate(file._creationTime)}</div>
          </CardFooter>
       </Card>
    );
