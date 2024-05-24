@@ -55,7 +55,12 @@ export const createFile = mutation({
 });
 
 export const getFiles = query({
-   args: { AuthId: v.string(), query: v.string(), favorites: v.optional(v.boolean()) },
+   args: {
+      AuthId: v.string(),
+      query: v.string(),
+      favorites: v.optional(v.boolean()),
+      deletedFilesOnly: v.optional(v.boolean()),
+   },
    async handler(ctx, args) {
       const hasAccess = await hasAccessToOrg(ctx, args.AuthId);
 
@@ -90,8 +95,10 @@ export const getFiles = query({
          return (await filesWithUrl).filter((file) =>
             favorites.some((favorite) => favorite.fileId === file._id)
          );
+      } else if (Boolean(args.deletedFilesOnly)) {
+         return (await filesWithUrl).filter((file) => file.shouldDelete);
       } else {
-         return filesWithUrl;
+         return (await filesWithUrl).filter((file) => !Boolean(file.shouldDelete));
       }
    },
 });
@@ -126,7 +133,9 @@ export const deleteFile = mutation({
          );
       }
 
-      await ctx.db.delete(args.fileId);
+      await ctx.db.patch(args.fileId, {
+         shouldDelete: true,
+      });
    },
 });
 

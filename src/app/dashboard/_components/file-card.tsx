@@ -49,8 +49,8 @@ function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorite
                <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                     This action cannot be undone. This will permanently delete your account and
-                     remove your data from our servers.
+                     This action will mark the file for deletion process. Files are deleted
+                     periodically.
                   </AlertDialogDescription>
                </AlertDialogHeader>
                <AlertDialogFooter>
@@ -58,8 +58,8 @@ function FileCardAction({ file, isFavorited }: { file: FilePropTypes; isFavorite
                   <AlertDialogAction
                      onClick={async () => {
                         await deleteFile({ fileId: file._id });
-                        toast.info("File Deleted", {
-                           description: "Your File is now remove successfully from the system",
+                        toast.info("File marked for deletion", {
+                           description: "Your File is now moved to trash and will be deleted soon",
                         });
                      }}
                   >

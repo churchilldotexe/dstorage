@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { FileIcon, Star } from "lucide-react";
+import { FileIcon, Star, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -28,6 +28,17 @@ export default function SideNav() {
                })}
             >
                <Star /> Favorites
+            </Button>
+         </Link>
+
+         <Link href={"/dashboard/trash"}>
+            <Button
+               variant={"link"}
+               className={cn("flex w-full justify-start gap-2", {
+                  "text-blue-400": pathName.includes("/dashboard/trash"),
+               })}
+            >
+               <Trash2Icon /> Trash
             </Button>
          </Link>
       </div>

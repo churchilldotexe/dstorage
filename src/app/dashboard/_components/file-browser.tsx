@@ -32,9 +32,11 @@ function PlaceHolder() {
 export default function FilesBrowser({
    title,
    showFavoritesOnly,
+   deletedFilesOnly,
 }: {
    title: string;
    showFavoritesOnly?: boolean;
+   deletedFilesOnly?: boolean;
 }) {
    const [query, setQuery] = useState<string>("");
    const user = useAuth();
@@ -55,7 +57,7 @@ export default function FilesBrowser({
 
    const files = useQuery(
       api.files.getFiles,
-      AuthId !== "" ? { AuthId, query, favorites: showFavoritesOnly } : "skip"
+      AuthId !== "" ? { AuthId, query, favorites: showFavoritesOnly, deletedFilesOnly } : "skip"
    );
    const isLoading = files === undefined || favorites === undefined;
 
