@@ -106,7 +106,13 @@ export default function FilesBrowser({
 
                <div className="flex items-center gap-2 font-semibold">
                   <label htmlFor="type-select">Type Filter</label>
-                  <Select value={type} onValueChange={setType}>
+                  <Select
+                     value={type}
+                     onValueChange={(newType) => {
+                        // @ts-expect-error alreay expected a value
+                        setType(newType);
+                     }}
+                  >
                      <SelectTrigger id="type-select" className="w-[180px] ">
                         <SelectValue />
                      </SelectTrigger>

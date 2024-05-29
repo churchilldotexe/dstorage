@@ -17,7 +17,7 @@ export default function Header() {
             <div className="space-x-4">
                <OrganizationSwitcher />
                <SignedIn>
-                  <UserButton />
+                  <UserButton afterSignOutUrl="/" />
                </SignedIn>
                <SignedOut>
                   <SignInButton mode="modal">

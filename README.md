@@ -1,3 +1,5 @@
+d'Gallery - a File storage app using nextjs,clerk auth, convex for backend
+
 Note:
 
 -  pnpm is locked at 9.0.6 or higher
