@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Protect } from "@clerk/nextjs";
 import { type Doc } from "convex/_generated/dataModel";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
    FileIcon,
    MoreVerticalIcon,
@@ -36,6 +36,7 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
    const deleteFile = useMutation(api.files.deleteFile);
    const restoreFile = useMutation(api.files.restoreFile);
    const toggleFavorites = useMutation(api.files.toggleFavorites);
+   const me = useQuery(api.users.getMe);
 
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
 
@@ -107,7 +108,16 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                   )}
                </DropdownMenuItem>
 
-               <Protect role="org:admin" fallback={<Fragment></Fragment>}>
+               <Protect
+                  condition={(check) => {
+                     return (
+                        check({
+                           role: "org:admin",
+                        }) || file.userId === me?._id
+                     );
+                  }}
+                  fallback={<Fragment></Fragment>}
+               >
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem onClick={handleItemDeletionOrRestoration}>

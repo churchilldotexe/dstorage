@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { type Id } from "./_generated/dataModel";
+import { type Doc, type Id } from "./_generated/dataModel";
 import {
    internalMutation,
    mutation,
@@ -142,6 +142,18 @@ export const deleteAllFiles = internalMutation({
    },
 });
 
+function canDeleteOrRestore(user: Doc<"users">, file: Doc<"files">) {
+   const canRestore =
+      file.userId === user._id ||
+      user.orgIds.find((org) => org.orgId === file.AuthId)?.role === "admin";
+
+   if (!canRestore) {
+      throw new ConvexError(
+         "You don't have access to delete this file, please contact your admin."
+      );
+   }
+}
+
 export const deleteFile = mutation({
    args: { fileId: v.id("files") },
    async handler(ctx, args) {
@@ -151,14 +163,7 @@ export const deleteFile = mutation({
          throw new ConvexError("no access to file");
       }
 
-      const isAdmin =
-         access.user.orgIds.find((org) => org.orgId === access.file.AuthId)?.role === "admin";
-
-      if (!isAdmin) {
-         throw new ConvexError(
-            "You don't have access to delete this file, please contact your admin."
-         );
-      }
+      canDeleteOrRestore(access.user, access.file);
 
       await ctx.db.patch(args.fileId, {
          shouldDelete: true,
@@ -175,14 +180,7 @@ export const restoreFile = mutation({
          throw new ConvexError("no access to file");
       }
 
-      const isAdmin =
-         access.user.orgIds.find((org) => org.orgId === access.file.AuthId)?.role === "admin";
-
-      if (!isAdmin) {
-         throw new ConvexError(
-            "You don't have access to delete this file, please contact your admin."
-         );
-      }
+      canDeleteOrRestore(access.user, access.file);
 
       await ctx.db.patch(args.fileId, {
          shouldDelete: false,
