@@ -1,13 +1,15 @@
 "use client";
 
+import { columns } from "@/app/dashboard/_components/columns";
 import { FileCard } from "@/app/dashboard/_components/file-card";
+import { DataTable } from "@/app/dashboard/_components/file-table";
 import SearchBar from "@/app/dashboard/_components/search-bar";
 import { UploadButton } from "@/app/dashboard/_components/upload-button";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 
 function PlaceHolder() {
@@ -59,7 +61,13 @@ export default function FilesBrowser({
       api.files.getFiles,
       AuthId !== "" ? { AuthId, query, favorites: showFavoritesOnly, deletedFilesOnly } : "skip"
    );
-   const isLoading = files === undefined || favorites === undefined;
+
+   const modifiedFiles = files?.map((file) => ({
+      ...file,
+      isFavorited: (favorites ?? []).some((favorite) => favorite.fileId === file._id),
+   }));
+
+   const isLoading = modifiedFiles === undefined || favorites === undefined;
 
    return (
       <main className="container space-y-6 pt-12">
@@ -80,10 +88,12 @@ export default function FilesBrowser({
 
          {files?.length === 0 && <PlaceHolder />}
 
-         {!isLoading && files?.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-               {files?.map((file) => <FileCard favorites={favorites} key={file._id} file={file} />)}
-            </div>
+         {!isLoading && modifiedFiles?.length > 0 && (
+            <Fragment>
+               <DataTable columns={columns} data={modifiedFiles} />
+               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></div>
+               {modifiedFiles?.map((file) => <FileCard key={file._id} file={file} />)}
+            </Fragment>
          )}
       </main>
    );

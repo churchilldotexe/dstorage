@@ -9,6 +9,9 @@ export default function Header() {
             <Link href={"/"} className="text-xl font-semibold text-gray-950 hover:underline">
                d&apos;Gallery
             </Link>
+            <Button asChild variant={"link"}>
+               <Link href={"/dashboard/files"}>My Files</Link>
+            </Button>
             <div className="space-x-4">
                <OrganizationSwitcher />
                <SignedIn>
