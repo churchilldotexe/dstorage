@@ -3,6 +3,7 @@ import Header from "@/app/_components/Header";
 import "@/styles/globals.css";
 import { Toaster } from "sonner";
 
+import Footer from "@/app/_components/Footer";
 import { GeistSans } from "geist/font/sans";
 
 export const metadata = {
@@ -17,8 +18,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          <body>
             <ConvexClientProvider>
                <Toaster closeButton richColors />
-               <Header />
-               {children}
+               <div className="flex h-screen flex-col ">
+                  <Header />
+                  <div className="h-full ">{children}</div>
+                  <Footer />
+               </div>
             </ConvexClientProvider>
          </body>
       </html>

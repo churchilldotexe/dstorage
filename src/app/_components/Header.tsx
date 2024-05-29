@@ -4,14 +4,16 @@ import Link from "next/link";
 
 export default function Header() {
    return (
-      <div className="border-b bg-gray-50 py-4">
+      <div className="relative z-10 border-b bg-gray-50 py-4">
          <div className="container mx-auto flex items-center justify-between">
             <Link href={"/"} className="text-xl font-semibold text-gray-950 hover:underline">
-               d&apos;Gallery
+               d&apos;Storage
             </Link>
-            <Button asChild variant={"link"}>
-               <Link href={"/dashboard/files"}>My Files</Link>
-            </Button>
+            <SignedIn>
+               <Button asChild variant={"link"}>
+                  <Link href={"/dashboard/files"}>My Files</Link>
+               </Button>
+            </SignedIn>
             <div className="space-x-4">
                <OrganizationSwitcher />
                <SignedIn>
