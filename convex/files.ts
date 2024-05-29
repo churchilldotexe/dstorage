@@ -67,6 +67,7 @@ export const getFiles = query({
       query: v.string(),
       favorites: v.optional(v.boolean()),
       deletedFilesOnly: v.optional(v.boolean()),
+      type: v.optional(fileTypes),
    },
    async handler(ctx, args) {
       const hasAccess = await hasAccessToOrg(ctx, args.AuthId);
@@ -104,6 +105,8 @@ export const getFiles = query({
          );
       } else if (Boolean(args.deletedFilesOnly)) {
          return (await filesWithUrl).filter((file) => file.shouldDelete);
+      } else if (Boolean(args.type)) {
+         return (await filesWithUrl).filter((file) => file.type === args.type);
       } else {
          return (await filesWithUrl).filter((file) => !Boolean(file.shouldDelete));
       }
