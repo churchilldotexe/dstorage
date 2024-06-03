@@ -92,7 +92,6 @@ export default function FilesBrowser({
 
             <UploadButton />
          </div>
-
          <Tabs defaultValue="grid" className="space-y-4">
             <div className="flex items-center justify-between">
                <TabsList>
@@ -109,7 +108,7 @@ export default function FilesBrowser({
                   <Select
                      value={type}
                      onValueChange={(newType) => {
-                        // @ts-expect-error alreay expected a value
+                        // @ts-expect-error already expected a value below
                         setType(newType);
                      }}
                   >

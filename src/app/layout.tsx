@@ -18,9 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          <body>
             <ConvexClientProvider>
                <Toaster closeButton richColors />
-               <div className="flex h-screen flex-col ">
+               <div className="flex flex-col ">
                   <Header />
-                  <div className="h-full ">{children}</div>
+                  <div className="h-full">{children}</div>
                   <Footer />
                </div>
             </ConvexClientProvider>

@@ -1,5 +1,6 @@
 "use client";
 
+import ImagePreview from "@/app/dashboard/_components/image-preview";
 import { Button } from "@/components/ui/button";
 import {
    Dialog,
@@ -23,21 +24,58 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type Doc } from "convex/_generated/dataModel";
 import { useMutation } from "convex/react";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useReducer, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
 
+const MAX_FILE_SIZE = 4 * 1024 * 1024;
+
 const formSchema = z.object({
    title: z.string().min(2).max(50),
-   file: z
+   files: z
       .custom<FileList>((val) => val instanceof FileList, "Required")
-      .refine((files) => files.length > 0, "Required"),
+      .refine((files) => files.length > 0, "Required")
+      .refine((files) => files.length <= 5, "You can upload up to 5 files at a time")
+      .refine(
+         (files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE),
+         "Each file must be less than or equal to 5mb"
+      ),
 });
+
+type State = {
+   previews: string[];
+   objectUrls: string[];
+};
+
+type Action =
+   | { type: "SET_PREVIEWS"; payload: string[] }
+   | { type: "SET_OBJECT_URLS"; payload: string[] }
+   | { type: "RESET" };
+
+const initialState: State = {
+   objectUrls: [],
+   previews: [],
+};
+
+function reducer(state: State, action: Action): State {
+   switch (action.type) {
+      case "SET_PREVIEWS":
+         return { ...state, previews: action.payload };
+      case "SET_OBJECT_URLS":
+         return { ...state, objectUrls: action.payload };
+      case "RESET":
+         return initialState;
+      default:
+         return state;
+   }
+}
 
 export function UploadButton() {
    const [isFileDiaglogOpen, setIsFileDiaglogOpen] = useState<boolean>(false);
+   const [state, dispatch] = useReducer(reducer, initialState);
+   const { objectUrls, previews } = state;
 
    const user = useAuth();
    const hasUser = user.userId === null || user.userId === undefined;
@@ -57,46 +95,69 @@ export function UploadButton() {
       resolver: zodResolver(formSchema),
       defaultValues: {
          title: "",
-         file: undefined,
+         files: undefined,
       },
    });
 
-   const fileRef = form.register("file");
+   const fileRef = form.register("files");
+
+   function handleChange(event: ChangeEvent<HTMLInputElement>) {
+      const files = event.target.files;
+      if (files !== null) {
+         objectUrls.forEach((url) => {
+            URL.revokeObjectURL(url);
+         });
+         const previewUrl = Array.from(files).map((file) => URL.createObjectURL(file));
+         dispatch({ type: "SET_PREVIEWS", payload: previewUrl });
+         dispatch({ type: "SET_OBJECT_URLS", payload: previewUrl });
+      }
+   }
 
    async function onSubmit(values: z.infer<typeof formSchema>) {
       if (AuthId === "") return;
-      if (values.file[0] === undefined) return;
+      if (values.files[0] === undefined) return;
 
       try {
-         const postUrl = await generateUploadUrl();
+         for (const file of values.files) {
+            console.log("file ", file);
+            const postUrl = await generateUploadUrl();
+            const fileType = file.type;
+            const result = await fetch(postUrl, {
+               method: "POST",
+               headers: { "Content-Type": fileType },
+               body: file,
+            });
 
-         const fileType = values.file[0].type;
-         const result = await fetch(postUrl, {
-            method: "POST",
-            headers: { "Content-Type": fileType },
-            body: values.file[0],
-         });
-
-         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-         const { storageId } = await result.json();
-
-         const types = {
-            "image/png": "image",
-            "image/jpg": "image",
-            "image/jpeg": "image",
-            "image/webp": "image",
-            "image/bmp": "image",
-            "application/pdf": "pdf",
-            "text/csc": "csv",
-         } as Record<string, Doc<"files">["type"]>;
-
-         await createFile({
-            name: values.title,
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            fileId: storageId,
-            AuthId,
-            type: types[fileType]!,
+            const { storageId } = await result.json();
+
+            const types = {
+               "image/png": "image",
+               "image/jpg": "image",
+               "image/jpeg": "image",
+               "image/webp": "image",
+               "image/bmp": "image",
+               "application/pdf": "pdf",
+               "text/csc": "csv",
+            } as Record<string, Doc<"files">["type"]>;
+
+            const fileNameOnly = file.name.split(".").slice(0, -1).join(".");
+            console.log("fileNameOnly", fileNameOnly);
+
+            await createFile({
+               // name: values.title,
+               name: file.name,
+               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+               fileId: storageId,
+               AuthId,
+               type: types[fileType]!,
+            });
+         }
+
+         objectUrls.forEach((url) => {
+            URL.revokeObjectURL(url);
          });
+         dispatch({ type: "RESET" });
 
          form.reset();
          setIsFileDiaglogOpen(false);
@@ -116,6 +177,10 @@ export function UploadButton() {
          onOpenChange={(open) => {
             setIsFileDiaglogOpen(open);
             form.reset();
+            dispatch({ type: "RESET" });
+            objectUrls.forEach((url) => {
+               URL.revokeObjectURL(url);
+            });
          }}
       >
          <DialogTrigger asChild>
@@ -143,17 +208,25 @@ export function UploadButton() {
 
                         <FormField
                            control={form.control}
-                           name="file"
+                           name="files"
                            render={() => (
                               <FormItem>
-                                 <FormLabel>File</FormLabel>
+                                 <FormLabel>Files</FormLabel>
                                  <FormControl>
-                                    <Input type="file" {...fileRef} />
+                                    <Input
+                                       type="file"
+                                       multiple
+                                       {...fileRef}
+                                       onChange={handleChange}
+                                    />
                                  </FormControl>
                                  <FormMessage />
                               </FormItem>
                            )}
                         />
+
+                        {previews.length > 0 && <ImagePreview previews={previews} />}
+
                         <Button type="submit" disabled={form.formState.isSubmitting}>
                            {form.formState.isSubmitting ? (
                               <div className="flex items-center gap-1">
