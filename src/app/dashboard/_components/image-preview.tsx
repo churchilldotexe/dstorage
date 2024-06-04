@@ -1,12 +1,14 @@
+"use client";
+
+import { type PreviewsArrayType } from "@/app/dashboard/_components/file-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
-type ImagePreviewProps = { previews: string[] };
+type ImagePreview = { previews: PreviewsArrayType };
 
-export default function ImagePreview({ previews }: ImagePreviewProps) {
+export default function ImagePreview({ previews }: ImagePreview) {
    const [currentIndex, setCurrentIndex] = useState<number>(0);
-   console.log("currentIndex", currentIndex);
 
    function handleNextImage() {
       if (currentIndex === previews.length - 1) {
@@ -25,27 +27,44 @@ export default function ImagePreview({ previews }: ImagePreviewProps) {
 
    return (
       <div className="flex items-center justify-center">
-         <button type="button" onClick={handlePrevImage}>
-            <ChevronLeft />
+         <button
+            className="text-gray-950 hover:scale-105 focus-visible:scale-105 active:scale-95"
+            type="button"
+            onClick={handlePrevImage}
+         >
+            <ChevronLeft className="size-8 " />
          </button>
 
          <div className="flex size-80 overflow-hidden">
-            {previews.map((url, index) => (
-               <div key={index} className="relative size-full shrink-0">
-                  <Image
-                     style={{ translate: `${-100 * currentIndex}%` }}
-                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                     alt={`preview ${index}`}
-                     src={url}
-                     className="size-full object-cover object-center transition-all duration-500 ease-in-out"
-                     fill
-                  />
-               </div>
+            {previews.map((preview, index) => (
+               <Fragment key={index}>
+                  <div className="relative size-full shrink-0">
+                     <p
+                        style={{ translate: `${-100 * currentIndex}%` }}
+                        className="absolute z-20 w-full pt-2 text-center text-gray-950"
+                     >
+                        {preview.name}
+                     </p>
+
+                     <Image
+                        style={{ translate: `${-100 * currentIndex}%` }}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        alt={`preview ${index}`}
+                        src={preview.url}
+                        className="z-10 size-full object-cover object-center transition-all duration-300 ease-in-out"
+                        fill
+                     />
+                  </div>
+               </Fragment>
             ))}
          </div>
 
-         <button type="button" onClick={handleNextImage}>
-            <ChevronRight />
+         <button
+            className="text-gray-950 hover:scale-105 focus-visible:scale-105 active:scale-95"
+            type="button"
+            onClick={handleNextImage}
+         >
+            <ChevronRight className="size-8 " />
          </button>
       </div>
    );
