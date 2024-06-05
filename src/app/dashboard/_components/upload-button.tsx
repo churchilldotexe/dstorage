@@ -21,8 +21,6 @@ export function UploadButton() {
          open={isFileDiaglogOpen}
          onOpenChange={(open) => {
             setIsFileDiaglogOpen(open);
-            // form.reset();
-            // dispatch({ type: "RESET" });
             objectUrls.forEach((url) => {
                URL.revokeObjectURL(url);
             });

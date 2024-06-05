@@ -49,10 +49,10 @@ export default function ImagePreview({ previews }: ImagePreview) {
                      <Image
                         style={{ translate: `${-100 * currentIndex}%` }}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        alt={`preview ${index}`}
                         src={preview.url}
                         className="z-10 size-full object-cover object-center transition-all duration-300 ease-in-out"
                         fill
+                        alt={`${preview.name} preview`}
                      />
                   </div>
                </Fragment>

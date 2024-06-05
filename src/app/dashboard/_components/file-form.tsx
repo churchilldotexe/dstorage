@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { api } from "../../../../convex/_generated/api";
 
-const MAX_FILE_SIZE = 4 * 1024 * 1024;
+const MAX_FILE_SIZE = 11 * 1024 * 1024;
 
 const formSchema = z.object({
    files: z
@@ -38,7 +38,7 @@ const formSchema = z.object({
       .refine((files) => files.length <= 5, "You can upload up to 5 files at a time")
       .refine(
          (files) => Array.from(files).every((file) => file.size <= MAX_FILE_SIZE),
-         "Each file must be less than or equal to 4mb"
+         "Each file must be less than or equal to 11mb"
       ),
 });
 
@@ -122,13 +122,23 @@ export function FileForm({
          objectUrls.forEach((url) => {
             URL.revokeObjectURL(url);
          });
+
          const url = Array.from(files).map((file) => URL.createObjectURL(file));
          const previewUrl = Array.from(files).map((file) => {
-            return { url: URL.createObjectURL(file), name: file.name };
+            console.log("file", file);
+
+            if (file.type === "application/pdf") {
+               return { url: "/pdf.svg", name: file.name };
+            } else if (file.type === "text/csv") {
+               return { url: "/csv.svg", name: file.name };
+            } else {
+               return { url: URL.createObjectURL(file), name: file.name };
+            }
          });
          dispatch({ type: "SET_PREVIEWS", payload: previewUrl });
          dispatch({ type: "SET_OBJECT_URLS", payload: url });
          setObjectUrls(url);
+
          form.setValue("files", files, { shouldValidate: true });
 
          if (InputRef.current !== null && InputRef.current !== undefined) {
@@ -230,7 +240,7 @@ export function FileForm({
                                     <p>Drag and drop files here, or click to select files.</p>
                                     <p>
                                        Please upload <strong>up to 5 files</strong> at a time, each
-                                       not exceeding <strong>4MB</strong>.
+                                       not exceeding <strong>11MB</strong>.
                                     </p>
                                  </div>
                               )}

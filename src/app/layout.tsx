@@ -18,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          <body>
             <ConvexClientProvider>
                <Toaster closeButton richColors />
+               {/* //TODO fix layout where when the files few footer must always in the bottom */}
                <div className="flex flex-col ">
                   <Header />
                   <div className="h-full">{children}</div>

@@ -32,15 +32,25 @@ export function FileCard({ file }: { file: FilePropTypes }) {
                <FileCardAction file={file} />
             </div>
          </CardHeader>
+
          <CardContent className="flex h-[200px] items-center justify-center">
             {file.type === "image" && (
                <div key={file._id} className="relative size-full">
                   <Image src={file.url} alt={file.name} fill style={{ objectFit: "contain" }} />
                </div>
             )}
-            {file.type === "csv" && <GanttChartIcon className="size-20" />}
-            {file.type === "pdf" && <FileTextIcon className="size-20" />}
+            {file.type === "csv" && (
+               <div key={file._id} className="relative size-full">
+                  <Image src={"/csv.svg"} alt={file.name} fill style={{ objectFit: "contain" }} />
+               </div>
+            )}
+            {file.type === "pdf" && (
+               <div key={file._id} className="relative size-full">
+                  <Image src={"/pdf.svg"} alt={file.name} fill style={{ objectFit: "contain" }} />
+               </div>
+            )}
          </CardContent>
+
          <CardFooter className="flex flex-wrap justify-between gap-2 text-sm font-semibold text-gray-500">
             <div className="flex items-center gap-2 ">
                <Avatar className="size-6">
