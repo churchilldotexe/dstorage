@@ -188,6 +188,21 @@ export const restoreFile = mutation({
    },
 });
 
+export const renameFile = mutation({
+   args: { fileId: v.id("files"), name: v.string() },
+   async handler(ctx, args) {
+      const access = await hasAccessToFile(ctx, args.fileId);
+
+      if (access === null) {
+         throw new ConvexError("you have no access to file");
+      }
+
+      await ctx.db.patch(args.fileId, {
+         name: args.name,
+      });
+   },
+});
+
 export const toggleFavorites = mutation({
    args: { fileId: v.id("files") },
    async handler(ctx, args) {

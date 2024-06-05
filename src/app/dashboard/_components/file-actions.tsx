@@ -1,3 +1,4 @@
+import { RenameForm } from "@/app/dashboard/_components/rename-form";
 import {
    AlertDialog,
    AlertDialogAction,
@@ -8,6 +9,13 @@ import {
    AlertDialogHeader,
    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+   Dialog,
+   DialogContent,
+   DialogDescription,
+   DialogHeader,
+   DialogTitle,
+} from "@/components/ui/dialog";
 import {
    DropdownMenu,
    DropdownMenuContent,
@@ -21,6 +29,7 @@ import { useMutation, useQuery } from "convex/react";
 import {
    FileIcon,
    MoreVerticalIcon,
+   PencilLine,
    StarHalf,
    StarIcon,
    Trash2Icon,
@@ -29,7 +38,6 @@ import {
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../../convex/_generated/api";
-
 type FilePropTypes = Doc<"files"> & { url: string | null; isFavorited: boolean };
 
 export function FileCardAction({ file }: { file: FilePropTypes }) {
@@ -39,6 +47,11 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
    const me = useQuery(api.users.getMe);
 
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
+   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState<boolean>(false);
+
+   const handleRenameFile = async () => {
+      setIsRenameDialogOpen(true);
+   };
 
    const handleItemDeletionOrRestoration = async () => {
       if (Boolean(file.shouldDelete)) {
@@ -77,11 +90,29 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
             </AlertDialogContent>
          </AlertDialog>
 
+         <Dialog
+            open={isRenameDialogOpen}
+            onOpenChange={(open) => {
+               setIsRenameDialogOpen(open);
+            }}
+         >
+            <DialogContent>
+               <DialogHeader>
+                  <DialogTitle className="pb-4">Rename your file</DialogTitle>
+                  <DialogDescription>
+                     <RenameForm file={file} setIsRenameDialogOpen={setIsRenameDialogOpen} />
+                  </DialogDescription>
+               </DialogHeader>
+            </DialogContent>
+         </Dialog>
+
          <DropdownMenu>
             <DropdownMenuTrigger>
                <MoreVerticalIcon />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+               {/*  //TODO add new action for share link.. it will copy to clipboard the link to a new route (make a new route for shared image.. /*/}
+
                <DropdownMenuItem
                   className="flex cursor-pointer items-center gap-2 "
                   onClick={() => {
@@ -118,6 +149,12 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                   }}
                   fallback={<Fragment></Fragment>}
                >
+                  <DropdownMenuItem onClick={handleRenameFile}>
+                     <div className="flex items-center gap-1">
+                        <PencilLine className="size-4" /> Rename
+                     </div>
+                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem onClick={handleItemDeletionOrRestoration}>
