@@ -69,7 +69,7 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
       }
    };
 
-   const linkToPreview = `/shared-file/${file.fileId}?n=${file.name}&t=${file.type}`;
+   const linkToPreview = `/shared-file/${file.fileId}`;
 
    if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
 
