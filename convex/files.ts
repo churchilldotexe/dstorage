@@ -252,3 +252,38 @@ export const getAllFavorites = query({
       return favorites;
    },
 });
+
+export const getSharedFile = query({
+   args: { fileId: v.id("_storage") },
+   async handler(ctx, args) {
+      const sharedFile = await ctx.db
+         .query("sharedFiles")
+         .withIndex("by_fileId", (q) => q.eq("fileId", args.fileId))
+         .first();
+
+      if (sharedFile === null) throw new ConvexError("No File found or file is not shareable");
+
+      return sharedFile;
+   },
+});
+
+export const shareFile = mutation({
+   args: { fileId: v.id("_storage"), name: v.string(), fileType: fileTypes, url: v.string() },
+   async handler(ctx, args) {
+      const urlInfo = await ctx.db
+         .query("sharedFiles")
+         .withIndex("by_fileId", (q) => q.eq("fileId", args.fileId))
+         .first();
+
+      if (urlInfo === null) {
+         await ctx.db.insert("sharedFiles", {
+            fileId: args.fileId,
+            name: args.name,
+            fileType: args.fileType,
+            url: args.url,
+         });
+      } else {
+         await ctx.db.delete(urlInfo._id);
+      }
+   },
+});

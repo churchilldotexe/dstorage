@@ -34,4 +34,11 @@ export default defineSchema({
          })
       ),
    }).index("by_tokenIdentifier", ["tokenIdentifier"]),
+
+   sharedFiles: defineTable({
+      fileId: v.id("_storage"),
+      name: v.string(),
+      fileType: fileTypes,
+      url: v.string(),
+   }).index("by_fileId", ["fileId"]),
 });
