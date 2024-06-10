@@ -30,21 +30,29 @@ import {
    FileIcon,
    MoreVerticalIcon,
    PencilLine,
+   ShareIcon,
    StarHalf,
    StarIcon,
    Trash2Icon,
    Undo2Icon,
+   View,
 } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../../convex/_generated/api";
+import { env } from "@/env";
+import { useRouter } from "next/navigation";
+
 type FilePropTypes = Doc<"files"> & { url: string | null; isFavorited: boolean };
 
 export function FileCardAction({ file }: { file: FilePropTypes }) {
    const deleteFile = useMutation(api.files.deleteFile);
    const restoreFile = useMutation(api.files.restoreFile);
+   const shareFile = useMutation(api.files.shareFile);
    const toggleFavorites = useMutation(api.files.toggleFavorites);
    const me = useQuery(api.users.getMe);
+
+   const router = useRouter();
 
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
    const [isRenameDialogOpen, setIsRenameDialogOpen] = useState<boolean>(false);
@@ -61,7 +69,23 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
       }
    };
 
+   const linkToPreview = `/shared-file/${file.fileId}?n=${file.name}&t=${file.type}`;
+
    if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
+
+   const handleCopyToClipboard = async () => {
+      if (file.url !== null) {
+         const linkToCopy = `${env.NEXT_PUBLIC_URL}${linkToPreview}`;
+         await shareFile({
+            name: file.name,
+            fileType: file.type,
+            fileId: file.fileId,
+            url: file.url,
+         });
+         await navigator.clipboard.writeText(linkToCopy);
+         toast.success("Link copied to clipboard", { description: "You can now share your files" });
+      }
+   };
 
    return (
       <Fragment>
@@ -111,8 +135,6 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                <MoreVerticalIcon />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-               {/*  //TODO add new action for share link.. it will copy to clipboard the link to a new route (make a new route for shared image.. /*/}
-
                <DropdownMenuItem
                   className="flex cursor-pointer items-center gap-2 "
                   onClick={() => {
@@ -137,6 +159,24 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                         <StarHalf className="size-4" /> Favorite
                      </div>
                   )}
+               </DropdownMenuItem>
+
+               <DropdownMenuItem
+                  className="flex cursor-pointer items-center gap-2 "
+                  onClick={async () => {
+                     await handleCopyToClipboard();
+                  }}
+               >
+                  <ShareIcon className="size-4" /> Share
+               </DropdownMenuItem>
+
+               <DropdownMenuItem
+                  className="flex cursor-pointer items-center gap-2 "
+                  onClick={() => {
+                     router.push(linkToPreview);
+                  }}
+               >
+                  <View className="size-4" /> View
                </DropdownMenuItem>
 
                <Protect
