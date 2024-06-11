@@ -28,10 +28,10 @@ import { Protect } from "@clerk/nextjs";
 import { type Doc } from "convex/_generated/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
+   Clipboard,
    FileIcon,
    MoreVerticalIcon,
    PencilLine,
-   ShareIcon,
    StarHalf,
    StarIcon,
    Trash2Icon,
@@ -50,16 +50,14 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
    const restoreFile = useMutation(api.files.restoreFile);
    const shareFile = useMutation(api.files.shareFile);
    const toggleFavorites = useMutation(api.files.toggleFavorites);
+   const removeSharedFile = useMutation(api.files.removeSharedFile);
    const me = useQuery(api.users.getMe);
+   const getSharedFile = useQuery(api.files.getSharedFile, { fileId: file.fileId });
+   const isFileShared = getSharedFile !== null;
 
    const router = useRouter();
-
    const [isConfirmOpen, setIsConfirmOpen] = useState<boolean>(false);
    const [isRenameDialogOpen, setIsRenameDialogOpen] = useState<boolean>(false);
-
-   const handleRenameFile = async () => {
-      setIsRenameDialogOpen(true);
-   };
 
    const handleItemDeletionOrRestoration = async () => {
       if (Boolean(file.shouldDelete)) {
@@ -70,12 +68,12 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
    };
 
    const linkToPreview = `/shared-file/${file.fileId}`;
+   const linkToCopy = `${env.NEXT_PUBLIC_URL}${linkToPreview}`;
 
    if (file.url === null) throw new Error("Url Doesn't exist, unable to download the file");
 
    const handleCopyToClipboard = async () => {
-      if (file.url !== null) {
-         const linkToCopy = `${env.NEXT_PUBLIC_URL}${linkToPreview}`;
+      if (file.url !== null && !isFileShared) {
          await shareFile({
             name: file.name,
             fileType: file.type,
@@ -83,7 +81,11 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
             url: file.url,
          });
          await navigator.clipboard.writeText(linkToCopy);
-         toast.success("Link copied to clipboard", { description: "You can now share your files" });
+         toast.success("File Share On", {
+            description: "Your file can now be shared. Successfully copied your file to clipboard.",
+         });
+      } else if (isFileShared) {
+         await removeSharedFile({ fileId: file.fileId });
       }
    };
 
@@ -167,17 +169,50 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                      await handleCopyToClipboard();
                   }}
                >
-                  <ShareIcon className="size-4" /> Share
+                  <div className="flex items-center gap-2">
+                     <label
+                        htmlFor="check"
+                        data-is-check={isFileShared}
+                        className="flex h-5 w-10 items-center rounded-full bg-gray-400 data-[is-check=true]:bg-green-500"
+                     >
+                        <input
+                           type="checkbox"
+                           id="check"
+                           className="peer sr-only"
+                           checked={isFileShared}
+                           readOnly
+                        />
+                        <span className="ml-[.15em] size-4 rounded-full bg-gray-50 peer-checked:ml-auto peer-checked:mr-[.15em]" />
+                     </label>
+                     {isFileShared ? "Shared" : "Share"}
+                  </div>
                </DropdownMenuItem>
 
-               <DropdownMenuItem
-                  className="flex cursor-pointer items-center gap-2 "
-                  onClick={() => {
-                     router.push(linkToPreview);
-                  }}
-               >
-                  <View className="size-4" /> View
-               </DropdownMenuItem>
+               {isFileShared && (
+                  <Fragment>
+                     <DropdownMenuItem
+                        className="flex cursor-pointer items-center gap-2 "
+                        onClick={() => {
+                           router.push(linkToPreview);
+                        }}
+                     >
+                        <View className="size-4" /> View
+                     </DropdownMenuItem>
+                     <DropdownMenuItem
+                        className="flex cursor-pointer items-center gap-2 "
+                        onClick={async () => {
+                           await navigator.clipboard.writeText(linkToCopy);
+                           toast.success("Link copied to clipboard", {
+                              description: "You can now share your files",
+                           });
+                        }}
+                     >
+                        <Fragment>
+                           <Clipboard className="size-4" /> Copy Link
+                        </Fragment>
+                     </DropdownMenuItem>
+                  </Fragment>
+               )}
 
                <Protect
                   condition={(check) => {
@@ -187,9 +222,14 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
                         }) || file.userId === me?._id
                      );
                   }}
+                  // eslint-disable-next-line react/jsx-no-useless-fragment
                   fallback={<Fragment></Fragment>}
                >
-                  <DropdownMenuItem onClick={handleRenameFile}>
+                  <DropdownMenuItem
+                     onClick={() => {
+                        setIsRenameDialogOpen(true);
+                     }}
+                  >
                      <div className="flex items-center gap-1">
                         <PencilLine className="size-4" /> Rename
                      </div>

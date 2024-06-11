@@ -261,29 +261,46 @@ export const getSharedFile = query({
          .withIndex("by_fileId", (q) => q.eq("fileId", args.fileId))
          .first();
 
-      if (sharedFile === null) throw new ConvexError("No File found or file is not shareable");
+      if (sharedFile === null) return null;
 
       return sharedFile;
    },
 });
 
+async function isFileShared(ctx: QueryCtx | MutationCtx, fileId: Id<"_storage">) {
+   const sharedFileInfo = await ctx.db
+      .query("sharedFiles")
+      .withIndex("by_fileId", (q) => q.eq("fileId", fileId))
+      .first();
+   if (sharedFileInfo === null) {
+      return null;
+   }
+   return sharedFileInfo;
+}
+
 export const shareFile = mutation({
    args: { fileId: v.id("_storage"), name: v.string(), fileType: fileTypes, url: v.string() },
    async handler(ctx, args) {
-      const urlInfo = await ctx.db
-         .query("sharedFiles")
-         .withIndex("by_fileId", (q) => q.eq("fileId", args.fileId))
-         .first();
+      const sharedFileInfo = await isFileShared(ctx, args.fileId);
 
-      if (urlInfo === null) {
+      if (sharedFileInfo === null) {
          await ctx.db.insert("sharedFiles", {
             fileId: args.fileId,
             name: args.name,
             fileType: args.fileType,
             url: args.url,
          });
-      } else {
-         await ctx.db.delete(urlInfo._id);
+      }
+   },
+});
+
+export const removeSharedFile = mutation({
+   args: { fileId: v.id("_storage") },
+   async handler(ctx, args) {
+      const sharedFileInfo = await isFileShared(ctx, args.fileId);
+
+      if (sharedFileInfo !== null) {
+         await ctx.db.delete(sharedFileInfo._id);
       }
    },
 });
