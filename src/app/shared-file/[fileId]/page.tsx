@@ -9,7 +9,7 @@ import { type Id } from "convex/_generated/dataModel";
 export default function SharedFilePage({ params }: { params: { fileId: Id<"_storage"> } }) {
    const getSharedFile = useQuery(api.files.getSharedFile, { fileId: params.fileId });
 
-   if (!Boolean(getSharedFile)) {
+   if (getSharedFile === null) {
       return <div>File is not valid</div>;
    }
 
@@ -24,13 +24,18 @@ export default function SharedFilePage({ params }: { params: { fileId: Id<"_stor
                <div className="text-2xl font-semibold">{getSharedFile?.name}</div>
                <Button onClick={() => window.open(getSharedFile?.url, "_blank")}>Download</Button>
             </div>
-            {Boolean(getSharedFile?.fileType) ? (
-               <div className="container relative aspect-auto size-full">
-                  <Image src={getSharedFile!.url} alt={`${getSharedFile?.name} preview`} fill />
-               </div>
-            ) : (
-               <div>{getSharedFile?.fileType}</div>
-            )}
+
+            <div className="py-8">
+               {Boolean(getSharedFile?.fileType) ? (
+                  <div className="container relative aspect-video size-full object-cover object-center">
+                     <Image src={getSharedFile!.url} alt={`${getSharedFile?.name} preview`} fill />
+                  </div>
+               ) : (
+                  <div className="container relative aspect-video size-full object-cover object-center">
+                     <Image src={"/pdf.svg"} alt={`${getSharedFile?.name} preview`} fill />
+                  </div>
+               )}
+            </div>
          </section>
       </main>
    );

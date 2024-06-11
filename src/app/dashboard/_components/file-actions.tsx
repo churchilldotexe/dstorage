@@ -81,8 +81,9 @@ export function FileCardAction({ file }: { file: FilePropTypes }) {
             url: file.url,
          });
          await navigator.clipboard.writeText(linkToCopy);
-         toast.success("File Share On", {
-            description: "Your file can now be shared. Successfully copied your file to clipboard.",
+         toast.success("File Sharing On", {
+            description:
+               "Your file has been successfully copied to the clipboard and is now ready to be shared.",
          });
       } else if (isFileShared) {
          await removeSharedFile({ fileId: file.fileId });
