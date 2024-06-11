@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 import { OrganizationSwitcher, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -13,19 +14,22 @@ export default function Header() {
             </SignedIn>
          </div>
          <div className="container flex w-full min-w-full items-center justify-between">
-            <div>
-               <Link href={"/"} className="text-xl font-semibold text-gray-950 hover:underline">
+            <div className="z-10">
+               <Link
+                  href={"/"}
+                  className="z-10 text-xl font-semibold text-gray-950 hover:underline"
+               >
                   d&apos;Storage
                </Link>
             </div>
             <div className="flex justify-center space-x-4">
                <OrganizationSwitcher />
                <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
+                  <UserButton afterSignOutUrl={`${env.NEXT_PUBLIC_URL}/`} />
                </SignedIn>
                <SignedOut>
                   <SignInButton mode="modal">
-                     <Button>Sign in</Button>
+                     <Button className="z-10">Sign in</Button>
                   </SignInButton>
                </SignedOut>
             </div>
