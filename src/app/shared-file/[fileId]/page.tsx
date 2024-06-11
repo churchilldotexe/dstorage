@@ -25,7 +25,7 @@ export default function SharedFilePage({ params }: { params: { fileId: Id<"_stor
                <Button onClick={() => window.open(getSharedFile?.url, "_blank")}>Download</Button>
             </div>
             {Boolean(getSharedFile?.fileType) ? (
-               <div className="container relative aspect-video size-full">
+               <div className="container relative aspect-auto size-full">
                   <Image src={getSharedFile!.url} alt={`${getSharedFile?.name} preview`} fill />
                </div>
             ) : (
